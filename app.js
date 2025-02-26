@@ -37,6 +37,7 @@ app.get("/player", (req,res)=>{
 });
 
 app.get("/player/:playerid", async(req,res)=>{
+    console.log(req.params.playerid);
     try{
 
         const player = await Player.findOne({playerid:req.params.playerid});
