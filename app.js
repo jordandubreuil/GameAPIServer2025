@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 const FILE_PATH = "player.json";
 
 //Connection for MongoDB
-mongoose.connect("mongodb://localhost:27017/gamedb");
+mongoose.connect("mongodb+srv://jordan:pass1234@cluster0.ezrcu.mongodb.net/GamesDB?retryWrites=true&w=majority&appName=Cluster0");//"mongodb://localhost:27017/gamedb");
 
 const db = mongoose.connection;
 
@@ -26,14 +26,29 @@ db.once("open", ()=>{
 
 //API endpoint for player.json;
 
-app.get("/player", (req,res)=>{
-    fs.readFile(FILE_PATH, "utf-8",(err, data)=>{
-        if(err){
-            return res.status(500).json({error:"Unable to fetch data"});
+// app.get("/player", (req,res)=>{
+//     fs.readFile(FILE_PATH, "utf-8",(err, data)=>{
+//         if(err){
+//             return res.status(500).json({error:"Unable to fetch data"});
+//         }
+//         res.json(JSON.parse(data));
+//         console.log(`Responded with: ${data}`);
+//     })
+// });
+
+app.get("/player", async (req,res)=>{
+    try{
+        const players = await Player.find();
+        if(!players){
+            return res.status(404).json({error:"Players not found"});
         }
-        res.json(JSON.parse(data));
-        console.log(`Responded with: ${data}`);
-    })
+
+        res.json(players);
+        console.log(players);
+    }
+    catch(error){
+        res.status(500).json({error:"Failed to retrieve players"})
+    }
 });
 
 app.get("/player/:playerid", async(req,res)=>{
@@ -84,6 +99,24 @@ app.post("/sentdatatodb", async (req,res)=>{
     }
     
     
+});
+
+//Update Player
+app.post("/updatePlayer", async(req,res)=>{
+    const playerData = req.body;
+
+    const player = await Player.findOne({name:playerData.name});
+
+    if(!player){
+        return res.status(404).json({message:"Player not found"});
+    }
+
+    player.score = playerData.score;
+    player.level = playerData.level;
+
+    await player.save();
+
+    res.json({message:"Player updated", player});
 });
 
 
